@@ -3,7 +3,7 @@
 maintainer="Danila Tikhonov <danila@jiaxyga.com>"
 pkgname=alsa-ucm-conf-qcom-sm7150
 pkgver=1.2.15.3_git20260513
-pkgrel=2
+pkgrel=3
 pkgdesc="ALSA UCM configuration for SM7150 devices"
 url="https://github.com/sm7150-mainline/alsa-ucm-conf"
 arch="aarch64"
@@ -31,5 +31,5 @@ package() {
 sha512sums="
 a9ceda049459bf8e228ac34ddc97ee69187ad7183f48a8bb3df0d513dd6066f0d10cb86e40e5b6e24c88f5152d47fec81f872db9ef6c1e027090198b5ddb1d09  alsa-ucm-conf-qcom-sm7150-4821070589906c1d80c83210639591678c245369.tar.gz
 009cec02cf81ce94dd2f530596c2dc877391bb163e03c661ef7a5e5bba2bc3aec41d2c9e24b512a66cb7da0d66dd413400095b835bed9e6caddea26e967cb51b  sweet.conf
-a096c1bfacd20d203c80ab92eea812c71d5625917f6f7b717f33aeb68d8a23c81e5037456fb4700983d972f9d640c0d23cdb40846c6eef6b31163dbb5cc3dd6d  sweet-HiFi.conf
+b24d92be527f547733a54f939f273e2ad5903f3239d77d5acf8113de193ba8c946d06bdf45b7180d8999bc8b20becba9b77a32366a57f28551b5e1a65d4623a4  sweet-HiFi.conf
 "
