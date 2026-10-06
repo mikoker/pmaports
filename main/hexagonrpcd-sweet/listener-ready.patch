@@ -1,0 +1,66 @@
+--- a/hexagonrpcd/listener.c
++++ b/hexagonrpcd/listener.c
+@@ -22,5 +22,11 @@
+  */
+ 
++#include <errno.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <unistd.h>
+ #include <inttypes.h>
+ #include <libhexagonrpc/fastrpc.h>
+ #include <libhexagonrpc/interfaces/remotectl.def>
+@@ -279,3 +285,38 @@
++/* Notify only after the DSP reverse listener is initialized. This keeps
++ * systemd ordering tied to an RPC handshake instead of process creation.
++ * No libsystemd dependency is needed for the static daemon. */
++static int notify_listener_ready(void)
++{
++	const char *path = getenv("NOTIFY_SOCKET");
++	const char message[] = "READY=1\nSTATUS=FastRPC listener initialized";
++	struct sockaddr_un address = { .sun_family = AF_UNIX };
++	size_t length;
++	ssize_t sent;
++	int socket_fd, saved_errno;
++
++	if (!path)
++		return 0;
++	length = strlen(path);
++	if (!length || length >= sizeof(address.sun_path) ||
++	    (path[0] != '/' && path[0] != '@'))
++		return -EINVAL;
++	memcpy(address.sun_path, path, length + 1);
++	if (path[0] == '@')
++		address.sun_path[0] = '\0';
++	socket_fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
++	if (socket_fd < 0)
++		return -errno;
++	sent = sendto(socket_fd, message, sizeof(message) - 1, MSG_NOSIGNAL,
++		      (struct sockaddr *)&address,
++		      offsetof(struct sockaddr_un, sun_path) + length +
++		      (path[0] == '/'));
++	saved_errno = errno;
++	close(socket_fd);
++	if (sent < 0)
++		return -saved_errno;
++	return sent == sizeof(message) - 1 ? 0 : -EIO;
++}
++
+ int run_fastrpc_listener(int fd,
+ 			 size_t n_ifaces,
+ 			 struct fastrpc_interface **ifaces)
+@@ -295,6 +336,12 @@
+ 		fprintf(stderr, "Could not initialize the listener: %u\n", ret);
+ 		return ret;
+ 	}
++	ret = notify_listener_ready();
++	if (ret) {
++		fprintf(stderr, "Could not notify listener readiness: %s\n",
++			strerror(-ret));
++		return ret;
++	}
+ 
+ 	while (!ret) {
+ 		ret = return_for_next_invoke(fd,

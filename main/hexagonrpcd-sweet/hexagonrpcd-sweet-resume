@@ -1,0 +1,9 @@
+#!/bin/sh
+# The upstream ADSP units conflict with suspend.target and stop before sleep.
+# Queue the resume unit without waiting inside the sleep hook. The unit waits
+# for the suspend transaction to finish before starting conflicting ADSP units.
+case "$1" in
+	post)
+		exec systemctl --no-block start hexagonrpcd-sweet-resume.service
+		;;
+esac

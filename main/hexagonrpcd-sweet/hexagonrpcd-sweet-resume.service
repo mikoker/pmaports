@@ -1,0 +1,8 @@
+[Unit]
+Description=Restore Xiaomi sweet ADSP services after sleep
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+After=systemd-suspend.service systemd-hibernate.service systemd-hybrid-sleep.service systemd-suspend-then-hibernate.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --no-block restart hexagonrpcd-adsp-rootpd.service hexagonrpcd-adsp-sensorspd.service iio-sensor-proxy.service

@@ -1,0 +1,56 @@
+# Local workaround tested on Xiaomi Redmi Note 10 Pro (sweet).
+maintainer="mikoker <mikolaj.kolata@gmail.com>"
+pkgname=hexagonrpcd-sweet
+pkgver=0.4.0
+pkgrel=6
+pkgdesc="Static HexagonFS daemon workaround for Xiaomi sweet"
+url="https://github.com/linux-msm/hexagonrpc"
+arch="aarch64"
+license="GPL-3.0-or-later"
+depends="hexagonrpcd firmware-xiaomi-sweet"
+makedepends_host="linux-headers"
+# Validation requires an actual ADSP and a full device boot.
+options="!check !strip pmb:cross-native2"
+source="
+	hexagonrpcd-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz
+	hexagonrpcd-adsp-rootpd.conf
+	hexagonrpcd-adsp-sensorspd.conf
+	iio-sensor-proxy.conf
+	hexagonrpcd-sweet-resume
+	hexagonrpcd-sweet-resume.service
+	listener-ready.patch
+"
+builddir="$srcdir/hexagonrpc-$pkgver"
+
+build() {
+	# Preserve the compiler/linking configuration verified on the phone.
+	# Build the daemon and its RPC implementation into one static executable.
+	${CC:-cc} --sysroot="${CBUILDROOT:-/}" -static -O2 -g -std=gnu11 -D_GNU_SOURCE \
+		-Iinclude -Ihexagonrpcd \
+		hexagonrpcd/*.c libhexagonrpc/*.c \
+		-o hexagonrpcd-sweet
+}
+
+package() {
+	install -Dm755 hexagonrpcd-sweet -t "$pkgdir/usr/libexec"
+	install -Dm755 "$srcdir/hexagonrpcd-sweet-resume" \
+		"$pkgdir/usr/lib/systemd/system-sleep/hexagonrpcd-sweet-resume"
+	install -Dm644 "$srcdir/hexagonrpcd-sweet-resume.service" \
+		"$pkgdir/usr/lib/systemd/system/hexagonrpcd-sweet-resume.service"
+	install -Dm644 "$srcdir/hexagonrpcd-adsp-rootpd.conf" \
+		"$pkgdir/usr/lib/systemd/system/hexagonrpcd-adsp-rootpd.service.d/90-sweet-static.conf"
+	install -Dm644 "$srcdir/hexagonrpcd-adsp-sensorspd.conf" \
+		"$pkgdir/usr/lib/systemd/system/hexagonrpcd-adsp-sensorspd.service.d/90-sweet-static.conf"
+	install -Dm644 "$srcdir/iio-sensor-proxy.conf" \
+		"$pkgdir/usr/lib/systemd/system/iio-sensor-proxy.service.d/90-sweet-ssc.conf"
+}
+
+sha512sums="
+18ebe4beeed97018243bec5043b8395c07c76f1174085e41a32648fd481485076fefffa091700ca1f72163687405456e5537aa538bc4f08fecacb3f83e3a82d8  hexagonrpcd-0.4.0.tar.gz
+76c0960cb7e981a7bfd2357dd5e61800cb62522d834ea31291dda2c86641ae3478cf15a304ee6c96f528dbf2c3ae0c812b9e9e60ef922758050a91c4bac9a058  hexagonrpcd-adsp-rootpd.conf
+45458a7580f047d4fe57a036f242cb32514ae9752f9693962b1eb6091800c4e07c5a4c20c15b2b70695dee87d230a4b51bdf99b015333aa9b0aed451fbeb2371  hexagonrpcd-adsp-sensorspd.conf
+8735dd4b237579e8288005e416fbb26579ae1bb7e52c7a60fa73b29904c38c8d1a650dd460f40e62f681bf4c77fd761dbe460309f7220d2225127f5672c50046  iio-sensor-proxy.conf
+b51e2683fcfddc865b4a7798090c21108a92b2b79f53c31d4ac7a41498628dd05f0d24bbd19e6b15deb3b42062b7c0592d572e7349cf4aaafc4a7de91b21983b  hexagonrpcd-sweet-resume
+5d32d0959b4483cc58d4d3706e99411f41171b36b5034454091aa5ad07e4551c94371918b908e1bafb042d04721f57bd142eb4b814be84ad2c7696a81f5a5ad8  hexagonrpcd-sweet-resume.service
+d29d028e2e155d92ac57dfccb6387fdf7738c7a9ca484593c6eb9399d31b34b645b90e53ecd9ce85f3ab7064172db4a2cb999097cacc8838e445e48ec2213eef  listener-ready.patch
+"
