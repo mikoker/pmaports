@@ -1,0 +1,54 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Based on Alpine community/iio-sensor-proxy 3.9-r2.
+# Local SSC coldplug/early-claim fix, tested on Xiaomi sweet.
+maintainer="mikoker <mikolaj.kolata@gmail.com>"
+pkgname=iio-sensor-proxy
+pkgver=3.9
+pkgrel=3
+pkgdesc="IIO sensors to D-Bus proxy"
+url="https://gitlab.freedesktop.org/hadess/iio-sensor-proxy"
+arch="all"
+license="GPL-3.0-or-later"
+depends="dbus"
+makedepends_build="meson glib-dev"
+makedepends_host="
+	eudev-dev
+	glib-dev
+	libgudev-dev
+	polkit-dev
+	libssc-dev
+	"
+options="pmb:cross-native2"
+subpackages="$pkgname-openrc $pkgname-systemd $pkgname-udev $pkgname-dbg"
+source="https://gitlab.freedesktop.org/hadess/iio-sensor-proxy/-/archive/$pkgver/iio-sensor-proxy-$pkgver.tar.gz
+	iio-sensor-proxy.initd
+	ssc-startup-claims.patch
+	cross-polkit-policy-path.patch
+	"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dssc-support=enabled \
+		-Dudevrulesdir=/usr/lib/udev/rules.d \
+		-Dsystemdsystemunitdir=/usr/lib/systemd/system \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+}
+
+sha512sums="
+a89c842f8db2a1a36c1c7c990434bb57fd905224459170cba2ec56e79f1272acc4cac4221937704d5e9247f957d86fde716d25e2d1ccb80d88fa643b47edfda6  iio-sensor-proxy-3.9.tar.gz
+b25df94e249ca46fe96926e5a866c20dc913fa52a2d9259fb7a3594861c6b2f246fc7fef8a21f5b021f3a71401f734ae27210137b0b1917a7daaffb5e3221f2e  iio-sensor-proxy.initd
+95662c1c88a9971576b2c46914679f22fc721512ea84918dd6d922d8bddbd34dab13d776702169c6222c472b816c155e055d76ce7c82162b67d59ac635cc840f  ssc-startup-claims.patch
+663bba455daab7d546ab965058957f7302f1dc27f88d913f20ffdec4216e42d843c652865a277dca075145f0a88c455c74f0eb9abfbd9cf0e64bf9992d83bb28  cross-polkit-policy-path.patch
+"
