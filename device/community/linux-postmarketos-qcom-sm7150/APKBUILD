@@ -3,12 +3,12 @@
 maintainer="Danila Tikhonov <danila@jiaxyga.com>"
 _flavor="postmarketos-qcom-sm7150"
 pkgname=linux-$_flavor
-pkgver=7.1_rc3
+pkgver=7.1_p20261011110320
 pkgrel=0
 pkgdesc="Mainline Kernel fork for SM7150 devices"
 arch="aarch64"
 _carch="arm64"
-url="https://github.com/sm7150-mainline/linux"
+url="https://github.com/mikoker/linux"
 license="GPL-2.0-only"
 options="!strip !check !tracedeps
 	pmb:cross-native
@@ -28,18 +28,19 @@ makedepends="
 	zstd
 "
 
-_tag="$pkgver"
+_commit="25093f1e93d05baf25bf9686345f36debdf6df79"
 
 # Source
 source="
-	$pkgname-v$_tag.tar.gz::$url/archive/v$_tag.tar.gz
+	$pkgname-$_commit.tar.gz::$url/archive/$_commit.tar.gz
 	config-$_flavor.$arch
 "
-builddir="$srcdir/linux-$_tag"
+builddir="$srcdir/linux-$_commit"
 
 prepare() {
 	default_prepare
 	cp "$srcdir/config-$_flavor.$arch" .config
+	make ARCH="$_carch" LLVM=1 olddefconfig
 }
 
 build() {
@@ -69,6 +70,6 @@ package() {
 
 
 sha512sums="
-bb837959e337c66ff374d8f3aac6593723c4f4eb69fb18f9ff25c5c096c6656fd71149e105255c0f97c83e0bf547b0b0e94ca23eabde7b5f88308e9ecd784e3d  linux-postmarketos-qcom-sm7150-v7.1_rc3.tar.gz
+bdb42b8cad85a91c9f61f96f8d38995af7db6b478f5e179841924805b0e7bf51aa1a46e84064d674acf995a664db3c9f6182a1bec22fb0955e4fd50fbdb0809f  linux-postmarketos-qcom-sm7150-25093f1e93d05baf25bf9686345f36debdf6df79.tar.gz
 8526d7403a28e01a2a7f42411f3e244c6be8fca6aa962930b61ae8aec9d66b4a69e9ad68481bb677be36f5fef8885235689be15674b24f77ac043d715fad20df  config-postmarketos-qcom-sm7150.aarch64
 "
